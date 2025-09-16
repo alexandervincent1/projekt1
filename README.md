@@ -8,7 +8,7 @@ flowchart TD
 
     %% Decision
     E -- False --> F[Edit admin true/false]
-    F --> G[användar DB]
+    F --> G[Användar DB]
     G --> E
     G --> H[Add new user to DB]
     H --> I[New username and password]
@@ -25,17 +25,6 @@ flowchart TD
     N --> Q[empty]
 
     M --> R[Lager<br/>frontend: html<br/>backend: server.js / DB]
-    R --> S[Button: "Redigera vara"]
-    R --> T[Button: "Lägg Till ny vara"]
-    R --> U[Button: "Ta bort vara"]
-    R --> V[Button: "Visa lager"]
-
-    S --> W[Redigera speciellt element i DB]
-    T --> X[Lägg till element i DB]
-    U --> Y[Ta bort element i DB]
-    V --> Z[Visa alla element i DB]
-
-    W --> N
-    X --> N
-    Y --> N
-    Z --> N
+    R --> S[Button: Redigera vara]
+    R --> T[Button: Lägg Till ny vara]
+    R --> U[Button: Ta bort vara]()
