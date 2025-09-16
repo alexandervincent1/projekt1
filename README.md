@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ```mermaid
 flowchart TD
     %% Login
@@ -39,3 +40,5 @@ flowchart TD
     X --> N
     Y --> N
     Z --> N
+=======
+>>>>>>> 33f3933 (built the structure for the program)
