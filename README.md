@@ -1,41 +1,34 @@
 ```mermaid
 flowchart TD
-    %% Login
-    A["Login<br/>frontend: html<br/>backend: server.js / DB"] --> B["Text input: username"]
-    B --> C["Text input: password"]
-    C --> D["Username and password element"]
-    D --> E{"Check if user and password correct"}
+    A["login<br>frontend : VUE<br>backend : server.js / DB"] --> B["text input: username"] & AA["signup<br>frontend : VUE<br>backend : server.js / DB"]
+    B --> C["text input: password"]
+    C --> D["username and password element"]
+    D --> E["check if user and password correct"]
+    E -- If False --> A
+    E -- If True --> F["Check admin true / false"]
+    F -- If True --> G["GET DB"]
+    F -- If False --> A
+    G --> H["server.js"]
+    H --> I["lager<br>frontend : VUE<br>backend : server.js / DB"]
+    AA --> AB["text input: new username"]
+    AB --> AC["text input: new password"]
+    AC --> AD["new username and password"]
+    AD --> AE["Check if username taken"]
+    AE --> AF["användar DB"]
+    AF --> AG{"if not taken"}
+    AG -- Yes --> AH["add new user to DB"]
+    AH --> G
+    I --> J["Button PATCH product"] & K["Button POST product"] & L["Button DEL product"] & M["Button GET DB"]
+    J --> N["PATCH specific element in DB"]
+    K --> O["POST element in DB"]
+    L --> P["DEL element in DB"]
+    M --> Q["GET elements in DB"]
+    N --> R["lager DB"]
+    O --> R
+    P --> R
+    Q --> R
+    R --> S["vara 1"] & T["vara 2"] & U["empty"]
+    n2["PATCH admin BOOL"] --> H
 
-    %% Decision
-    E -- False --> F["Edit admin true/false"]
-    F --> G["Användar DB"]
-    G --> E
-    G --> H["Add new user to DB"]
-    H --> I["New username and password"]
-    I --> J["Text input: new username"]
-    I --> K["Text input: new password"]
-    J --> L["Signup<br/>frontend: html<br/>backend: server.js / DB"]
-    K --> L
+    H@{ shape: rect}
 
-    %% True path
-    E -- True --> M["server.js"]
-    M --> N["Lager DB"]
-    N --> O["Vara 1"]
-    N --> P["Vara 2"]
-    N --> Q["empty"]
-
-    M --> R["Lager<br/>frontend: html<br/>backend: server.js / DB"]
-    R --> S["Button: Redigera vara"]
-    R --> T["Button: Lägg Till ny vara"]
-    R --> U["Button: Ta bort vara"]
-    R --> V["Button: Visa lager"]
-
-    S --> W["Redigera speciellt element i DB"]
-    T --> X["Lägg till element i DB"]
-    U --> Y["Ta bort element i DB"]
-    V --> Z["Visa alla element i DB"]
-
-    W --> N
-    X --> N
-    Y --> N
-    Z --> N
