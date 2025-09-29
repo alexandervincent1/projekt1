@@ -1,8 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-
-
-import '/Users/master/Desktop/Te4/projekt1/frontend/src/assets/css/signup.css'
+import '/Users/master/Desktop/Te4/projekt1/frontend/src/components/css/signup.css'
 
 
 const username = ref('');
@@ -80,17 +78,3 @@ async function register() {
         </div>
     </div>
 </template>
-
-<style scoped>
-
-.error-message {
-    color: #ef4444; 
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-.success-message {
-    color: #10b981; 
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-</style>

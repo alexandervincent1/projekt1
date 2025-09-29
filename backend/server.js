@@ -6,15 +6,60 @@ import cors from 'cors';
 
 const app = express();
 
-
+// --- KORRIGERAT: Flytta express.json() till toppen ---
+// Middleware för att tolka inkommande JSON-förfrågningar (req.body)
 app.use(express.json()); 
 
+// Middleware för CORS
 const allowedOrigins = "*"; 
 app.use(cors({
     origin: allowedOrigins
 }));
+// --------------------------------------------------
 
 
+// --- Produktmodell och Rutt ---
+const productSchema = new mongoose.Schema({
+    Product_ID: String,
+    Product_Name: String,
+    Price: Number,
+    Stock: Number
+});
+const Product = mongoose.model('Product', productSchema);
+
+// GET all products
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await Product.find();
+        res.json(products);  // return array of products
+    } catch (error) {
+        console.error("Fel vid hämtning av produkter:", error);
+        res.status(500).json({ message: 'Fel vid hämtning av produkter.' });
+    }
+});
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        await Product.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Produkt borttagen!' });
+    } catch (error) {
+        console.error("Fel vid borttagning av produkt:", error);
+        res.status(500).json({ message: 'Fel vid borttagning av produkt.' });
+    }
+});
+
+app.post('/api/products', async (req, res) => {
+    try {
+        const product = new Product(req.body);
+        await product.save();
+        res.status(201).json({ message: 'Produkt sparad!', product });
+    } catch (error) {
+        console.error("Fel vid sparande av produkt:", error);
+        res.status(500).json({ message: 'Fel vid sparande av produkt.' });
+    }
+});
+
+
+// --- MongoDB Anslutning ---
 const uri = process.env.MONGO_URI; 
 
 if (!uri) {
@@ -30,7 +75,7 @@ mongoose.connect(uri)
     });
 
 
-
+// --- Användarmodell och Rutter ---
 
 const userSchema = new mongoose.Schema({
     username: { 
@@ -124,7 +169,6 @@ app.post('/api/login', async (req, res) => {
 
 });
 
-// --- 5. Starta Servern ---
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`Backend Server kör på http://localhost:${PORT}`));

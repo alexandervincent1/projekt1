@@ -15,6 +15,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import '/Users/master/Desktop/Te4/projekt1/frontend/src/components/css/login.css'
+
 const username = ref('')
 const password = ref('')
 const router = useRouter()
