@@ -1,3 +1,4 @@
+```mermaid
 flowchart TD
     A["login<br>frontend : VUE<br>backend : server.js / DB"] --> B["text input: username"] & AA["signup<br>frontend : VUE<br>backend : server.js / DB"]
     B --> C["text input: password"]
@@ -28,3 +29,4 @@ flowchart TD
     Q --> S
     R --> S
     T --> S
+
