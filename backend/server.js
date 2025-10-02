@@ -3,8 +3,20 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import cors from 'cors';
-
+import jwt from 'jsonwebtoken'
 const app = express();
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+    if (!token) return res.status(401).json({ message: "Unauthorized" })
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: "Forbidden" })
+        req.user = user
+        next()
+    })
+}
+
 
 // --- KORRIGERAT: Flytta express.json() till toppen ---
 // Middleware för att tolka inkommande JSON-förfrågningar (req.body)
@@ -28,7 +40,7 @@ const productSchema = new mongoose.Schema({
 const Product = mongoose.model('Product', productSchema);
 
 // GET all products
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', authenticateToken, async (req, res) => {
     try {
         const products = await Product.find();
         res.json(products);  // return array of products
@@ -37,7 +49,10 @@ app.get('/api/products', async (req, res) => {
         res.status(500).json({ message: 'Fel vid hämtning av produkter.' });
     }
 });
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', authenticateToken, requireAdmin, async (req, res) => {
+    if (!req.params.id) {
+        return res.status(400).json({ message: 'Produkt-id saknas.' });
+    }
     try {
         await Product.findByIdAndDelete(req.params.id);
         res.json({ message: 'Produkt borttagen!' });
@@ -47,14 +62,23 @@ app.delete('/api/products/:id', async (req, res) => {
     }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', authenticateToken, requireAdmin, async (req, res) => {
+    const { Product_ID, Product_Name, Price, Stock } = req.body;
+
+   
+    if (!Product_ID || !Product_Name || typeof Price !== 'number' || typeof Stock !== 'number') {
+        return res.status(400).json({ message: 'Alla fält måste vara ifyllda och pris/stock måste vara nummer.' });
+    }
+    if (Price < 0 || Stock < 0) {
+        return res.status(400).json({ message: 'Pris och lagersaldo måste vara 0 eller större.' });
+    }
+
     try {
-        const product = new Product(req.body);
+        const product = new Product({ Product_ID, Product_Name, Price, Stock });
         await product.save();
         res.status(201).json({ message: 'Produkt sparad!', product });
     } catch (error) {
-        console.error("Fel vid sparande av produkt:", error);
-        res.status(500).json({ message: 'Fel vid sparande av produkt.' });
+        res.status(500).json({ message: 'Fel vid sparande av produkt.', error: error.message });
     }
 });
 
@@ -155,7 +179,11 @@ app.post('/api/login', async (req, res) => {
     if (!passwordmatch) {
         return res.status(401).json({ message: "Ogiltigt användarnamn eller lösenord." });
     }
-
+     const token = jwt.sign(
+        { id: user._id, username: user.username, role: user.userRole },
+        process.env.JWT_SECRET, // Lägg till JWT_SECRET i din .env-fil!
+        { expiresIn: '2h' }
+    );
     const verifiedUser = {
         id: user._id,
         username: user.username,
@@ -164,11 +192,29 @@ app.post('/api/login', async (req, res) => {
     
     res.status(200).json({
         message: "Inloggning lyckades!",
-        user: verifiedUser
+        user: verifiedUser,
+        token
     });
 
 });
-
+app.put('/api/products/add', async (req, res) => {
+    const { id } = req.body;
+    try {
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: 'Produkt hittades inte.' });
+        }
+        if (product.Stock > 0) {
+            product.Stock -= 1; // Sänk lagersaldo med 1
+            await product.save();
+            res.json({ message: 'Produkt uppdaterad!', product });
+        } else {
+            res.status(400).json({ message: 'Produkten är slut i lager.' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Fel vid uppdatering av produkt.' });
+    }
+});
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`Backend Server kör på http://localhost:${PORT}`));

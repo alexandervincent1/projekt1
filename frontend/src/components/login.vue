@@ -14,8 +14,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-
+import { useAuthStore } from '../store/auth'
 import '/Users/master/Desktop/Te4/projekt1/frontend/src/components/css/login.css'
+const auth = useAuthStore()
 
 const username = ref('')
 const password = ref('')
@@ -29,7 +30,9 @@ async function login() {
             body: JSON.stringify({ username: username.value, password: password.value }),
         });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok && data.token) {
+            auth.setToken(data.token)
+            auth.setUser(data.user)
             if (data.user.role === 'admin') {
                 router.push('/warehouseadmin');
             } else {

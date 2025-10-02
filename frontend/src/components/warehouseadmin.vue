@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import '/Users/master/Desktop/Te4/projekt1/frontend/src/components/css/warehouse.css'
-
+import { useAuthStore } from '../store/auth'
+const auth = useAuthStore()
 const Product_ID = ref('')
 const Product_Name = ref('')
 const Price = ref('')
@@ -10,7 +11,11 @@ const products = ref([])
 
 async function fetchProducts() {
     try {
-        const res = await fetch('http://localhost:3000/api/products')
+        const res = await fetch('http://localhost:3000/api/products', {
+            headers: {
+                'Authorization': `Bearer ${auth.token}`
+            }
+        })
         const data = await res.json()
         const arr = Array.isArray(data) ? data : [data]
         products.value = arr.map(p => ({
@@ -27,10 +32,21 @@ async function fetchProducts() {
 }
 
 async function add_product() {
+    if (!Product_ID.value || !Product_Name.value || isNaN(Number(Price.value)) || isNaN(Number(Stock.value))) {
+        alert('Alla fält måste vara ifyllda och pris/stock måste vara nummer.')
+        return
+    }
+    if (Number(Price.value) < 0 || Number(Stock.value) < 0) {
+        alert('Pris och lagersaldo måste vara 0 eller större.')
+        return
+    }
     try {
         const res = await fetch('http://localhost:3000/api/products', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${auth.token}`
+            },
             body: JSON.stringify({
                 Product_ID: Product_ID.value,
                 Product_Name: Product_Name.value,
@@ -58,7 +74,10 @@ async function add_product() {
 async function deleteProduct(id) {
     try {
         const res = await fetch(`http://localhost:3000/api/products/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${auth.token}`
+            }
         })
         if (res.ok) {
             products.value = products.value.filter(p => p.id !== id)
@@ -78,22 +97,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="main">
-    <div class="product_config">
-      <input v-model="Product_ID" placeholder="Product ID" aria-label="Product_ID">
-      <input v-model="Product_Name" placeholder="Product Name" aria-label="Product Name">
-      <input v-model="Price" placeholder="Price" aria-label="Price">
-      <input v-model="Stock" placeholder="Stock" aria-label="Stock">
-      <button @click="add_product">Add Product</button>
+    <div class="main">
+        <div class="product_config">
+            <input v-model="Product_ID" placeholder="Product ID" aria-label="Product_ID">
+            <input v-model="Product_Name" placeholder="Product Name" aria-label="Product Name">
+            <input v-model="Price" placeholder="Price" aria-label="Price">
+            <input v-model="Stock" placeholder="Stock" aria-label="Stock">
+            <button @click="add_product">Add Product</button>
+        </div>
+        <div class="Stock">
+            <p>ID ⎯ Product ⎯ Price ⎯ Stock</p>
+            <div class="productrow" v-for="product in products" :key="product.id">
+                <p>#{{ product.Product_ID }} - {{ product.Product_Name }} - {{ product.Price }}Kr - Stock: {{
+                    product.Stock }}</p>
+                <p class="makeitpretty"></p>
+                <button class="deltebutton" @click="deleteProduct(product.id)">Delete</button>
+            </div>
+        </div>
+        <router-link class="Switch_page" to="/warehouse">Switch Page</router-link>
+        <router-link class="signout_button" to="/login">Sign Out</router-link>
+        <p class="whologgedin">
+            Logged in as: {{ auth.user?.username || 'Unknown' }}
+            <span v-if="auth.user?.role === 'admin'">[Admin]</span>
+            <span v-if="auth.user?.role == 'manager'">[Manager]</span>
+        </p>
+        
     </div>
-    <p>ID ⎯ Product ⎯ Price ⎯ Stock</p>
-    <div class="Stock">
-      <div class="productrow" v-for="product in products" :key="product.id">
-        <p>#{{ product.Product_ID }} - {{ product.Product_Name }} - {{ product.Price }}Kr - Stock: {{ product.Stock }}</p>
-        <button class="deltebutton" @click="deleteProduct(product.id)">Delete</button>
-      </div>
-    </div>
-    
-    <router-link class="signout_button" to="/login">Sign Out</router-link>
-  </div>
 </template>
