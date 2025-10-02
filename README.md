@@ -3,32 +3,30 @@ flowchart TD
     A["login<br>frontend : VUE<br>backend : server.js / DB"] --> B["text input: username"] & AA["signup<br>frontend : VUE<br>backend : server.js / DB"]
     B --> C["text input: password"]
     C --> D["username and password element"]
-    D --> E["check if user and password correct"]
+    D --> E["check if user and password correct (bcrypt)"]
     E -- If False --> A
-    E -- If True --> F["Check admin true / false"]
-    F -- If True --> G["GET DB"]
-    F -- If False --> A
-    G --> H["server.js"]
-    H --> I["lager<br>frontend : VUE<br>backend : server.js / DB"]
+    E -- If True --> F["Create JWT & Check admin true / false"]
+    F -- If True (Admin) --> G["Redirect to /warehouseadmin (GET Products)"]
+    F -- If False (User) --> I["Redirect to /warehouse (GET Products)"]
+    G --> H["server.js (JWT Auth)"]
+    H --> J["lagerhantering (Admin)"]
     AA --> AB["text input: new username"]
     AB --> AC["text input: new password"]
     AC --> AD["new username and password"]
     AD --> AE["Check if username taken"]
     AE --> AF["användar DB"]
     AF --> AG{"if not taken"}
-    AG -- Yes --> AH["add new user to DB"]
-    AH --> G
-    I --> J["Button PATCH product"] & K["Button POST product"] & L["Button DEL product"] & M["Button GET DB"]
-    J --> N["PATCH specific element in DB"]
-    K --> O["POST element in DB"]
-    L --> P["DEL element in DB"]
-    M --> Q["GET elements in DB"]
-    N --> R["lager DB"]
-    O --> R
-    P --> R
-    Q --> R
-    R --> S["vara 1"] & T["vara 2"] & U["empty"]
-    n2["PATCH admin BOOL"] --> H
-
-    H@{ shape: rect}
+    AG -- Yes --> AH["add new user to DB (password hashed)"]
+    AH --> I
+    I --> K["lager (User)"]
+    J --> L["Button POST product"] & M["Button DEL product"] & N["Button PUT product (Update)"]
+    K --> O["Button PUT product (Decrease Stock)"]
+    L --> P["POST element in DB"]
+    M --> Q["DEL element in DB"]
+    N --> R["PATCH specific element in DB"]
+    O --> T["PUT Decrease Stock in DB"]
+    P --> S["lager DB"]
+    Q --> S
+    R --> S
+    T --> S
 
