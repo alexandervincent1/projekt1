@@ -1,3 +1,33 @@
+# 📌: Projektmål och beskrivning the-warehouse-manager-app
+
+En app för att hantera lager för admin och en webbshop för users.
+
+# 🥅 Projektmål
+
+Syftet med projektet är att skapa en digital lager app där admin kan lägga till saker i lager och user kan "handla" varorna från lagret.
+
+# 📁 Projektbeskrivning
+
+appen ska ha 4 delar
+- Signup funktion
+- Login funktion
+- Warehouse sida
+- Admin sida
+  
+# 👥 Målgrupp
+
+"Företag som letar efter ett bra sätt att hålla koll på deras lager samt uppvisa det för användare"
+
+# 🏆 Framgångskritier
+- Användare ska kunna skapa konton och logga in och utvalda användare ska ha tillgång till admin sidan
+- Admin ska kunna lägga in 10 produkter med stock quantity över 10
+- Användare ska kunna lägga in de 10 produkter i shopping carten och den ska visa upp rätt pris för dem 10 då
+
+
+
+
+
+
 ```mermaid
 flowchart TD
     A["login<br>frontend : VUE<br>backend : server.js / DB"] --> B["text input: username"] & AA["signup<br>frontend : VUE<br>backend : server.js / DB"]
@@ -29,4 +59,5 @@ flowchart TD
     Q --> S
     R --> S
     T --> S
+
 
