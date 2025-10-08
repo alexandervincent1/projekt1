@@ -32,7 +32,7 @@ async function login() {
         const data = await res.json();
         if (res.ok && data.token) {
             auth.setToken(data.token)
-            auth.setUser(data.user)
+            auth.setUser(data.user) // <-- This sets the user object
             if (data.user.role === 'admin') {
                 router.push('/warehouseadmin');
             } else {

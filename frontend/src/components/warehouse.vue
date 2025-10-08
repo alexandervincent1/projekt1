@@ -8,17 +8,7 @@ const auth = useAuthStore()
 const products = ref([])
 const cart = useCartStore()
 
-const cartGrouped = computed(() => {
-  const map = {}
-  cart.cart.forEach(item => {
-    if (!map[item.id]) {
-      map[item.id] = { ...item, count: 1 }
-    } else {
-      map[item.id].count++
-    }
-  })
-  return Object.values(map)
-})
+const cartGrouped = computed(() => cart.cart)
 async function fetchProducts() {
   try {
     const res = await fetch('http://localhost:3000/api/products', {
@@ -49,46 +39,53 @@ onMounted(() => {
   fetchProducts()
 })
 
+function removeFromCart(item) {
+  cart.removeOneFromCart(item.id)
+  products.value = products.value.map(p =>
+    p.id === item.id ? { ...p, Stock: p.Stock + 1 } : p
+  )
+}
+
 async function addproduct(id) {
-    try {
-        const res = await fetch(`http://localhost:3000/api/products/add`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${auth.token}` // <-- Lägg till denna rad!
-            },
-            body: JSON.stringify({ id })
-        })
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}))
-            throw new Error(errorData.message || 'Failed to add product')
-        }
-        const data = await res.json()
+  try {
+    const product = products.value.find(p => p.id === id)
+    if (!product || product.Stock <= 0) return
 
-        // Uppdatera lagersaldo i products-listan
-        products.value = products.value.map(p =>
-            p.id === id ? { ...p, Stock: p.Stock - 1 } : p
-        )
-
-        // Hämta produkten UTAN count och lägg till i Pinia-cart
-        const product = products.value.find(p => p.id === id)
-        if (product && product.Stock >= 0) {
-            const { count, ...prodNoCount } = product
-            cart.addToCart(prodNoCount)
-        }
-    } catch (error) {
-        console.error(error)
-        alert(error.message || 'Error adding product. See console for details.')
+    const res = await fetch(`http://localhost:3000/api/products/add`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.token}`
+      },
+      body: JSON.stringify({ id })
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Failed to add product')
     }
+    await res.json()
+    const { count, ...prodNoCount } = product
+    cart.addToCart(prodNoCount)
+
+    products.value = products.value.map(p =>
+      p.id === id ? { ...p, Stock: p.Stock - 1 } : p
+    )
+  } catch (error) {
+    console.error(error)
+    alert(error.message || 'Error adding product. See console for details.')
+  }
 }
 
 
-// dropdown menu
 const isOpen = ref(false)
 const items = computed(() =>
   cartGrouped.value.map(
     item => `${item.count} x ${item.Product_Name} (${item.Price * item.count} kr)`
-  )
+  ),
+
+)
+const totalPrice = computed(() =>
+  cartGrouped.value.reduce((sum, item) => sum + item.count * item.Price, 0)
 )
 
 function toggleDropdown() {
@@ -98,10 +95,16 @@ function toggleDropdown() {
 function closeDropdown() {
   isOpen.value = false
 }
+const showThankYou = ref(false)
 
 
-
-
+function checkout() {
+  cart.clearCart()
+  showThankYou.value = true
+  setTimeout(() => {
+    showThankYou.value = false
+  }, 5000)
+}
 </script>
 
 <template>
@@ -114,10 +117,7 @@ function closeDropdown() {
             src="/Users/master/Desktop/Te4/projekt1/frontend/images/shoppingcart.png" alt=""></button>
       </div>
     </div>
-    <router-link
-      class="Switch_page"
-      to="/warehouseadmin"
-      v-if="auth.user?.role === 'admin'">
+    <router-link class="Switch_page" to="/warehouseadmin" v-if="auth.user?.role === 'admin'">
       Switch Page
     </router-link>
     <router-link class="signout_button" to="/login">Sign Out</router-link>
@@ -130,14 +130,24 @@ function closeDropdown() {
       </button>
 
       <div v-if="isOpen" class="cart-dropdown">
-        <li v-for="item in cart.cart" :key="item.id">
-    {{ item.count }} x {{ item.Product_Name }} ({{ item.Price * item.count }} kr)
-  </li>
+        <li v-for="item in cartGrouped" :key="item.id">
+          {{ item.count }} x {{ item.Product_Name }} ({{ item.Price * item.count }} kr)
+          <button @click="removeFromCart(item)" class="deltebutton">-</button>
+        </li>
+        <div v-if="showThankYou">Tack för ditt köp!</div>
+        <div v-else-if="cart.cart.length === 0">Cart is empty</div>
+        <div v-else>
+          Total: {{ totalPrice }} kr
+          <button @click="checkout" class="checkout-button">Checkout</button>
+        </div>
       </div>
+      <p class="whologgedin">
+        Logged in as: {{ auth.user?.username || 'Unknown' }}
+        <span v-if="auth.user?.role === 'admin'">[Admin]</span>
+      </p>
+      <p class="whatcompany">
+        Company: {{ auth.user?.userCompany || '—' }}
+      </p>
     </div>
-    <p class="whologgedin">
-  Logged in as: {{ auth.user?.username || 'Unknown' }}
-  <span v-if="auth.user?.role === 'admin'">[Admin]</span>
-</p>
   </div>
 </template>

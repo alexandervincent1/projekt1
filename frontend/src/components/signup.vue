@@ -8,7 +8,7 @@ const password = ref('');
 const password_confirm = ref('');
 const errorMessage = ref('');
 const successMessage = ref('');
-
+const userCompany = ref('');
 
 async function register() {
  
@@ -36,7 +36,8 @@ async function register() {
             body: JSON.stringify({
                 username: username.value,
                 password: password.value, 
-                userRole: 'user' 
+                userRole: 'user',
+                userCompany:userCompany.value
             }),
         });
 
@@ -49,14 +50,13 @@ async function register() {
             username.value = '';
             password.value = '';
             password_confirm.value = '';
+            userCompany='';
         } else {
          
             errorMessage.value = responseData.message || 'Ett okänt fel uppstod vid servern.';
         }
     } catch (error) {
        
-        console.error('Nätverksfel:', error);
-        errorMessage.value = 'Kunde inte ansluta till servern. Kontrollera att din backend körs på port 3000.';
     }
 }
 </script>
@@ -73,6 +73,7 @@ async function register() {
             <input v-model="username" placeholder="Username" aria-label="Användarnamn">
             <input v-model="password" type="password" placeholder="Password" aria-label="Lösenord">
             <input v-model="password_confirm" type="password" placeholder="Re-enter Password" aria-label="Bekräfta lösenord">
+            <input v-model="userCompany" placeholder="Företagsnamn" aria-label="Företagsnamn">
             <button @click="register">Sign Up!</button>
             <router-link to="/login">Login</router-link>
         </div>

@@ -5,6 +5,11 @@ import bcrypt from 'bcrypt';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'
 const app = express();
+app.use(express.json()); 
+const allowedOrigins = "*"; 
+app.use(cors({
+    origin: allowedOrigins
+}));
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
@@ -16,21 +21,14 @@ function authenticateToken(req, res, next) {
         next()
     })
 }
+function requireAdmin(req, res, next) {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Endast admin har åtkomst.' })
+    }
+    next()
+}
 
 
-// --- KORRIGERAT: Flytta express.json() till toppen ---
-// Middleware för att tolka inkommande JSON-förfrågningar (req.body)
-app.use(express.json()); 
-
-// Middleware för CORS
-const allowedOrigins = "*"; 
-app.use(cors({
-    origin: allowedOrigins
-}));
-// --------------------------------------------------
-
-
-// --- Produktmodell och Rutt ---
 const productSchema = new mongoose.Schema({
     Product_ID: String,
     Product_Name: String,
@@ -43,7 +41,7 @@ const Product = mongoose.model('Product', productSchema);
 app.get('/api/products', authenticateToken, async (req, res) => {
     try {
         const products = await Product.find();
-        res.json(products);  // return array of products
+        res.json(products);
     } catch (error) {
         console.error("Fel vid hämtning av produkter:", error);
         res.status(500).json({ message: 'Fel vid hämtning av produkter.' });
@@ -83,7 +81,7 @@ app.post('/api/products', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 
-// --- MongoDB Anslutning ---
+//MongoDB Anslutning
 const uri = process.env.MONGO_URI; 
 
 if (!uri) {
@@ -99,7 +97,7 @@ mongoose.connect(uri)
     });
 
 
-// --- Användarmodell och Rutter ---
+//Användarmodell och Rutter
 
 const userSchema = new mongoose.Schema({
     username: { 
@@ -120,42 +118,42 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['user', 'admin'],
         default: 'user'
+    },
+    userCompany: {
+        type: String,
     }
 
 });
 
 const User = mongoose.model('User', userSchema);
 
-// --- 4. Registrerings-Endpoint ---
+//Registrerings-Endpoint
 
 app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, userCompany } = req.body;
     const saltRounds = 10; 
 
     // A. Validering
-    if (!username || !password || password.length < 6) {
-        return res.status(400).json({ message: "Användarnamn och lösenord (minst 6 tecken) måste anges." });
+    if (!username || !password || password.length < 6 || !userCompany) {
+        return res.status(400).json({ message: "Användarnamn, lösenord (minst 6 tecken) och företag måste anges." });
     }
 
     try {
-        // B. Kontrollera om användaren redan finns
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(409).json({ message: "Användarnamnet är redan upptaget." });
         }
 
-        // C. Hasha lösenordet säkert
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // D. Skapa och spara den nya användaren i MongoDB
         const newUser = new User({ 
             username, 
-            password: hashedPassword 
+            password: hashedPassword,
+            userCompany
         });
 
         await newUser.save();
 
-        // E. Svar vid framgång
         console.log(`Ny användare registrerad: ${username}`);
         res.status(201).json({ 
             message: "Registrering lyckades! Användare sparad i MongoDB.",
@@ -181,18 +179,18 @@ app.post('/api/login', async (req, res) => {
     }
      const token = jwt.sign(
         { id: user._id, username: user.username, role: user.userRole },
-        process.env.JWT_SECRET, // Lägg till JWT_SECRET i din .env-fil!
+        process.env.JWT_SECRET, 
         { expiresIn: '2h' }
     );
     const verifiedUser = {
         id: user._id,
         username: user.username,
-        role: user.userRole
+        role: user.userRole,
+        userCompany: user.userCompany // <-- This line sends userCompany
     };
-    
     res.status(200).json({
         message: "Inloggning lyckades!",
-        user: verifiedUser,
+        user: verifiedUser, // <-- This sends user info to frontend
         token
     });
 
@@ -205,7 +203,7 @@ app.put('/api/products/add', async (req, res) => {
             return res.status(404).json({ message: 'Produkt hittades inte.' });
         }
         if (product.Stock > 0) {
-            product.Stock -= 1; // Sänk lagersaldo med 1
+            product.Stock -= 1;
             await product.save();
             res.json({ message: 'Produkt uppdaterad!', product });
         } else {

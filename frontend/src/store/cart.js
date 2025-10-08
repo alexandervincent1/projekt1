@@ -13,8 +13,15 @@ export const useCartStore = defineStore('cart', {
         this.cart.push({ ...product, count: 1 })
       }
     },
-    removeFromCart(id) {
-      this.cart = this.cart.filter(p => p.id !== id)
+    removeOneFromCart(id) {
+      const found = this.cart.find(p => p.id === id)
+      if (found) {
+        if (found.count > 1) {
+          found.count--
+        } else {
+          this.cart = this.cart.filter(p => p.id !== id)
+        }
+      }
     },
     clearCart() {
       this.cart = []

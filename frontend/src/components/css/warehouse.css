@@ -16,7 +16,30 @@
   flex-wrap: wrap;
   gap: 10px;
 }
-
+.checkout-button {
+  margin-top: 10px;
+  padding: 6px 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.checkout-button:hover {
+  background-color: #0056b3;
+}
+.deltebutton {
+  margin-left: 1px;
+  padding: 4px 10px;
+  background-color: #c00;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.deltebutton:hover {
+  background-color: #900;
+}
 .product_config input {
   flex: 1 1 150px;
   padding: px 5px;
